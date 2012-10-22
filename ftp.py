@@ -64,14 +64,12 @@ class FTPConnection:
                 try:
                     self.handler[command](arg)
                 except OSError, e:
-                    logger.error(e)
-                    logger.error("in start")
+                    logger.error("in start", exc_info=True)
                     self.send_msg(500, 'Permission denied')
             self.say_bye()
         except Exception, e:
             self.running = False
-            logger.error(e)
-            logger.error("in start")
+            logger.error("in start", exc_info=True)
         finally:
             self.fd.close()
 
@@ -100,8 +98,7 @@ class FTPConnection:
             split = buf.find(' ')
             command, arg = (buf[:split], buf[split + 1:].strip()) if split != -1 else (buf.strip(), '')
         except Exception, e:
-            logger.error(e)
-            logger.error("in recv")
+            logger.error("in recv", exc_info=True)
             self.running = False
             success = False
 
@@ -194,8 +191,7 @@ class FTPConnection:
             self.curr_dir = remote
             self.send_msg(250, "OK")
         except Exception, e:
-            logger.error(e)
-            logger.error("in cwd")
+            logger.error("in cwd", exc_info=True)
             self.send_msg(500, "Change directory failed!")
     def handle_SIZE(self, arg):
         remote, local = self.parse_path(self.curr_dir)
@@ -291,8 +287,7 @@ class FTPConnection:
             self.send_msg(227, 'Enter Passive Mode (%s,%u,%u).' %
                     (','.join(ip.split('.')), (port >> 8 & 0xff), (port & 0xff)))
         except Exception, e:
-            logger.error(e)
-            logger.error("in pasv")
+            logger.error("in pasv", exc_info=True)
             self.send_msg(500, 'passive mode failed')
     def handle_PORT(self, arg):
         try:
@@ -360,8 +355,7 @@ class FTPForkServer:
             handler = FTPConnection(client_fd, client_addr)
             handler.start()
         except Exception, e:
-            logger.error(e)
-            logger.error("in child_main")
+            logger.error("in child_main", exc_info=True)
 
         os.write(write_end, str(write_end))
 
@@ -379,7 +373,7 @@ class FTPForkServer:
             if listen_fd in rlist:
                 client_fd, client_addr = listen_fd.accept()
                 if len(self.read_fds) > limit_connection_number:
-                    logger.error('reject client: ' + str(client_addr))
+                    logger.error('reject client: ' + str(client_addr), exc_info=True)
                     client_fd.close()
                     continue
                 try:
@@ -394,8 +388,7 @@ class FTPForkServer:
                     else:
                         os.close(write_end)
                 except Exception, e:
-                    logger.error(e)
-                    logger.error('Fork failed')
+                    logger.error('Fork failed', exc_info=True)
                     
             for read_fd in rlist:
                 if read_fd == listen_fd: continue
@@ -520,7 +513,7 @@ if __name__ == '__main__':
 
     '''You can write your account_info in ftp.py.config'''
     try: execfile('ftp.py.config')
-    except Exception, e: logger.error(e) 
+    except Exception, e: logger.error(e, exc_info=True) 
 
     serve_forever()
 
